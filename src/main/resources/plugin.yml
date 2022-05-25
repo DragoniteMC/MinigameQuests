@@ -1,3 +1,8 @@
 name: MinigameQuests
 main: com.ericlam.mc.mgquests.MinigameQuests
 version: ${project.version}
+author: Eric Lam
+depend:
+  - ELDependenci-SQL
+  - DragonShop
+  - PlaceholderAPI

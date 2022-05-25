@@ -3,51 +3,126 @@ package com.ericlam.mc.mgquests.manager;
 import com.ericlam.mc.eld.annotations.InjectPool;
 import com.ericlam.mc.eld.configurations.GroupConfig;
 import com.ericlam.mc.mgquests.QuestException;
-import com.ericlam.mc.mgquests.config.GameTable;
-import com.ericlam.mc.mgquests.dshop.QuestObject;
+import com.ericlam.mc.mgquests.config.QuestMessage;
+import com.ericlam.mc.mgquests.config.QuestObject;
+import com.ericlam.mc.mgquests.db.Quest;
+import org.dragonitemc.dragonshop.api.PurchaseResult;
 
 import javax.inject.Inject;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 public class QuestsManager {
 
-    @InjectPool
-    private GroupConfig<GameTable> gameTables;
 
     @Inject
-    private TableManager tableManager;
+    private QuestsStatsManager questsStatsManager;
 
-    private final Map<String, Function<Long, Duration>> durationConverterMap = new HashMap<>();
+    @Inject
+    private ProgressManager progressManager;
 
-    public QuestsManager() {
-        durationConverterMap.put("minutes", Duration::ofMinutes);
-        durationConverterMap.put("hours", Duration::ofHours);
-        durationConverterMap.put("days", Duration::ofDays);
-        durationConverterMap.put("months", num -> Duration.ofDays(num * 30));
-        durationConverterMap.put("weeks", num -> Duration.ofDays(num * 7));
+    @Inject
+    private DurationConvertManager durationConvertManager;
+
+    @Inject
+    private QuestMessage message;
+
+
+    @InjectPool
+    private GroupConfig<QuestObject> questObjects;
+
+    public CompletableFuture<PurchaseResult> acceptQuest(UUID player, String questId) throws QuestException {
+        QuestObject questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        var stats = questsStatsManager.getPlayerStats(player);
+        var quest = stats.getQuest(questId);
+        if (quest == null){
+            quest = new Quest();
+            quest.user = player;
+            quest.quest = questId;
+        } else if (questObject.coolDown != null){
+           var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
+            if (coolDownEnd.isBefore(LocalDateTime.now())){
+                var err = message.getLang().get("quest-unavailable", questId);
+                return CompletableFuture.completedFuture(PurchaseResult.failed(err));
+            }
+        }
+        quest.lastStarted = Timestamp.from(Instant.now()).getTime();
+        return questsStatsManager.updateQuests(player, quest).thenApply(v -> PurchaseResult.success());
+    }
+
+    public CompletableFuture<Void> cancelQuest(UUID player, String questId) {
+        return questsStatsManager.removeQuests(player, questId);
+    }
+
+    public boolean isAvailable(UUID player, String questId) throws QuestException {
+        QuestObject questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        var stats = questsStatsManager.getPlayerStats(player);
+        var quest = stats.getQuest(questId);
+        if (quest == null){
+            return true;
+        } else if (questObject.coolDown != null){
+            var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
+            return coolDownEnd.isBefore(LocalDateTime.now());
+        }
+        return true;
+    }
+
+    public boolean isAccepted(UUID player, String questId) {
+        var quest = questsStatsManager.getPlayerStats(player).getQuest(questId);
+        if (quest == null) return false;
+        return quest.lastStarted > quest.lastFinished;
+    }
+
+    public PurchaseResult tryFinishQuest(UUID player, String questId) throws QuestException{
+        var questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        var gameStats = progressManager.getProgressCache(player);
+        var questStats = questsStatsManager.getPlayerStats(player);
+        var quest = questStats.getQuest(questId);
+        if (quest == null){
+            return PurchaseResult.failed(message.getLang().get("quest-unavailable", questId));
+        }
+        // check deadline is passed
+        var deadline = durationConvertManager.getDeadline(quest, questObject.timeLimit);
+        if (deadline.isBefore(LocalDateTime.now())) return PurchaseResult.failed(message.getLang().get("quest-unavailable", questId));
+        // check all stats is passed
+        for (String targetStat : questObject.targets.keySet()) {
+            var passNum = questObject.targets.get(targetStat);
+            var actualNum = gameStats.getProgress(questObject.getId(), targetStat);
+            if (actualNum < passNum) return PurchaseResult.failed(message.getLang().get("quest-not-finished", questId));
+        }
+        return PurchaseResult.success();
+    }
+
+    public double getTargetCount(String questId) throws QuestException {
+        var questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        if (questObject.targets == null) return 0;
+        return questObject.targets.values().stream().mapToDouble(v -> v).sum();
+    }
+
+    public double getFinishedCount(UUID player, String questId) throws QuestException {
+        if (!isAccepted(player, questId)) return 0;
+        var gameStats = progressManager.getProgressCache(player);
+        var questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        var stats = gameStats.getProgress(questObject.getId());
+        if (stats == null) return 0;
+        return stats.values().stream().mapToDouble(v -> v).sum();
     }
 
 
-    public CompletableFuture<Map<String, Double>> getResultStats(UUID player, QuestObject object) throws QuestException {
-        var tableOpt = gameTables.findById(object.type);
-        if (tableOpt.isEmpty()) throw new QuestException("table-not-exist", object.type);
-        var table = tableOpt.get();
-        var timeLimit = object.timeLimit;
-        if (timeLimit == null) throw new QuestException("time-limit-not-set");
-        if (object.stats == null) throw new QuestException("stats-not-set");
-        var durFunc = durationConverterMap.get(timeLimit.type);
-        if (durFunc == null) throw new QuestException("time-limit-not-exist", timeLimit.type);
-        for (String stat : object.stats) {
-            if (!table.statsColumns.contains(stat)) {
-                throw new QuestException("stat-not-exist", stat);
-            }
+    public CompletableFuture<PurchaseResult> finishQuest(UUID player, String questId) throws QuestException {
+        var result = tryFinishQuest(player, questId);
+        if (!result.isSuccess()) {
+            return CompletableFuture.completedFuture(result);
         }
-        return CompletableFuture.supplyAsync(() -> tableManager.getTableStats(player, table, durFunc.apply(timeLimit.time), object.stats));
+        var gameStats = progressManager.getProgressCache(player);
+        var questStats = questsStatsManager.getPlayerStats(player);
+        var quest = questStats.getQuest(questId);
+        quest.lastFinished = Timestamp.from(Instant.now()).getTime();
+        gameStats.clearProgress(questId);
+        return questsStatsManager.updateQuests(player, quest).thenApply(v -> result);
     }
 
 }

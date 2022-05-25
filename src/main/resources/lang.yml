@@ -1,0 +1,17 @@
+prefix: "&d[MinigameQuests] &7"
+table-not-exist: "&cTable &7{0} &cdoes not exist!"
+time-limit-not-set: "&cTime limit is not set!"
+stats-not-set: "&cStats are not set!"
+time-limit-not-exist: "&cTime limit &7{0} &cdoes not exist!"
+stat-not-exist: "&cStat &7{0} &cdoes not exist!"
+quest-not-exist: "&cQuest &7{0} &cdoes not exist!"
+quest-unavailable: "&cQuest &7{0} &cis currently not available!"
+quest-not-finished: "&cQuest &7{0} &cis not finished!"
+reload: "config reloaded."
+
+progress-bar-finished: "&a█"
+progress-bar: "&c█"
+
+
+operation-success: "&aOperation successful!"
+operation-failed: "&cOperation failed: {0}"

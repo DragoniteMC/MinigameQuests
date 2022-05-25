@@ -1,0 +1,8 @@
+type: mcinf
+stats:
+  - kills
+target: 20
+timeLimit:
+  type: day
+  time: 1
+coolDown:
