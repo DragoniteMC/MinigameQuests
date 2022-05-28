@@ -1,0 +1,10 @@
+type: mcinf
+stats:
+  - wins
+target: 5
+timeLimit:
+  type: hours
+  time: 1
+coolDown:
+  type: days
+  time: 1

@@ -25,7 +25,8 @@ public class Quest {
 
     public static class Quester implements Serializable {
 
-        public String name;
+
+        public String quest;
 
         @Column(columnDefinition = "varchar(40)")
         @Type(type = "uuid-char")
@@ -34,8 +35,8 @@ public class Quest {
         public Quester() {
         }
 
-        public Quester(String name, UUID user) {
-            this.name = name;
+        public Quester(String quest, UUID user) {
+            this.quest = quest;
             this.user = user;
         }
     }

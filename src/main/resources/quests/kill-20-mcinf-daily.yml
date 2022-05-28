@@ -3,6 +3,8 @@ stats:
   - kills
 target: 20
 timeLimit:
-  type: day
+  type: days
   time: 1
 coolDown:
+  type: days
+  time: 1
