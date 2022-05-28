@@ -2,6 +2,7 @@ package com.ericlam.mc.mgquests.container;
 
 import com.ericlam.mc.mgquests.db.Quest;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,6 +14,7 @@ public final class QuestStatsCache {
         questMap.put(questId, quest);
     }
 
+    @Nullable
     public Quest getQuest(String questId) {
         return questMap.get(questId);
     }

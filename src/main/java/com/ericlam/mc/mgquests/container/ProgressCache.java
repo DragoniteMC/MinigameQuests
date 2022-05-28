@@ -1,5 +1,7 @@
 package com.ericlam.mc.mgquests.container;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,6 +12,7 @@ public final class ProgressCache {
         progressMap.put(questId, stats);
     }
 
+    @Nullable
     public Map<String, Double> getProgress(String questId) {
         return progressMap.get(questId);
     }

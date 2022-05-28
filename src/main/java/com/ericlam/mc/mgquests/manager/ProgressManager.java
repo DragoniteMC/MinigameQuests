@@ -38,10 +38,11 @@ public class ProgressManager {
     }
 
     public CompletableFuture<Void> loadAllResults(UUID player, QuestStatsCache statsCache) throws QuestException{
-        var list = questObjects.findAll().stream().toList();
+        var list = questObjects.findAll();
         var futures = new ArrayList<CompletableFuture<Void>>();
         for (QuestObject questObject : list) {
             var quest = statsCache.getQuest(questObject.getId());
+            if (quest == null) continue;
             if (questObject.coolDown != null) {
                 var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
                 if (coolDownEnd.isBefore(LocalDateTime.now())) continue;
