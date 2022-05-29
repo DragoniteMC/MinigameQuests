@@ -2,6 +2,8 @@ package com.ericlam.mc.mgquests.manager;
 
 import com.ericlam.mc.eld.annotations.InjectPool;
 import com.ericlam.mc.eld.configurations.GroupConfig;
+import com.ericlam.mc.eld.misc.DebugLogger;
+import com.ericlam.mc.eld.services.LoggingService;
 import com.ericlam.mc.mgquests.QuestException;
 import com.ericlam.mc.mgquests.config.GameTable;
 import com.ericlam.mc.mgquests.config.QuestObject;
@@ -30,6 +32,14 @@ public class ProgressManager {
     @Inject
     private DurationConvertManager durationConvertManager;
 
+
+    private final DebugLogger logger;
+
+    @Inject
+    public ProgressManager(LoggingService loggingService){
+        this.logger = loggingService.getLogger(QuestsManager.class);
+    }
+
     private final Map<UUID, ProgressCache> progressCacheMap = new ConcurrentHashMap<>();
 
 
@@ -37,15 +47,24 @@ public class ProgressManager {
         return progressCacheMap.computeIfAbsent(uuid, id -> new ProgressCache());
     }
 
-    public CompletableFuture<Void> loadAllResults(UUID player, QuestStatsCache statsCache) throws QuestException{
-        var list = questObjects.findAll();
+    public CompletableFuture<Void> loadAllProgresses(UUID player, QuestStatsCache statsCache) throws QuestException{
         var futures = new ArrayList<CompletableFuture<Void>>();
-        for (QuestObject questObject : list) {
-            var quest = statsCache.getQuest(questObject.getId());
-            if (quest == null) continue;
+        var questStatsMap = statsCache.getQuestMap();
+        logger.debugF("preparing to load %d ongoing quests for player %s", questStatsMap.size(), player);
+        for (var quest : questStatsMap.values()) {
+            logger.debugF("loading quest %s for player %s", quest.quest, player);
+            var questObjectOpt = questObjects.findById(quest.quest);
+            if (questObjectOpt.isEmpty()) {
+                logger.debugF("cannot find quest %s from QuestObjects, ignored", quest.quest);
+                continue;
+            }
+            var questObject = questObjectOpt.get();
             if (questObject.coolDown != null) {
                 var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
-                if (coolDownEnd.isBefore(LocalDateTime.now())) continue;
+                if (coolDownEnd.isBefore(LocalDateTime.now())) {
+                    logger.debugF("quest %s is cooled down, ignored (deadline: %s)", quest.quest, coolDownEnd);
+                    continue;
+                }
             }
             futures.add(getResultStats(player, questObject, quest.lastStarted).thenAccept(map -> {
                 var cache = progressCacheMap.computeIfAbsent(player, uuid -> new ProgressCache());

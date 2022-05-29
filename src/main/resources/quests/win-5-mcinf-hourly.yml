@@ -1,7 +1,6 @@
 type: mcinf
-stats:
-  - wins
-target: 5
+targets:
+  wins: 5
 timeLimit:
   type: hours
   time: 1

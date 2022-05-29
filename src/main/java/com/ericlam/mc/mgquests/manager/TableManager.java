@@ -2,6 +2,8 @@ package com.ericlam.mc.mgquests.manager;
 
 import com.dragonite.mc.dnmc.core.main.DragoniteMC;
 import com.dragonite.mc.dnmc.core.managers.SQLDataSource;
+import com.ericlam.mc.eld.misc.DebugLogger;
+import com.ericlam.mc.eld.services.LoggingService;
 import com.ericlam.mc.mgquests.config.GameTable;
 
 import javax.inject.Inject;
@@ -21,8 +23,13 @@ public class TableManager {
     private final SQLDataSource sqlDataSource;
 
 
-    public TableManager() {
+    private final DebugLogger logger;
+
+
+    @Inject
+    public TableManager(LoggingService loggingService) {
         this.sqlDataSource = DragoniteMC.getAPI().getSQLDataSource();
+        this.logger = loggingService.getLogger(TableManager.class);
     }
 
     public Map<String, Double> getTableStats(UUID player, GameTable gameTable, Duration duration, Set<String> stat, long lastStarted) {
@@ -34,6 +41,9 @@ public class TableManager {
 
         var deadline =  Timestamp.valueOf(new Timestamp(lastStarted).toLocalDateTime().plus(duration)).getTime();
 
+        logger.debugF("preparing to execute statement: %s", statement);
+        logger.debugF("with parameters: %s, %s, %s", player.toString(), lastStarted, deadline);
+
         try (Connection connection = sqlDataSource.getConnection(); PreparedStatement stmt = connection.prepareStatement(statement)) {
             stmt.setString(1, player.toString());
             stmt.setLong(2, lastStarted);
@@ -43,6 +53,7 @@ public class TableManager {
                 for (String stats : gameTable.statsColumns) {
                     map.put(stats, result.getDouble(stats));
                 }
+                logger.debugF("successfully fetched stats: %s", map);
             }
         } catch (SQLException e) {
             e.printStackTrace();

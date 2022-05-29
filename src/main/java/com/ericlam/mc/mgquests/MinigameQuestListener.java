@@ -31,7 +31,7 @@ public class MinigameQuestListener implements Listener {
         questsStatsManager.loadPlayerStats(player.getUniqueId())
                 .thenCompose(cache -> {
                     try {
-                        return progressManager.loadAllResults(player.getUniqueId(), cache);
+                        return progressManager.loadAllProgresses(player.getUniqueId(), cache);
                     } catch (QuestException qe) {
                         var err = message.getLang().get(qe.getPath(), qe.getArgs());
                         LOGGER.warn(err);

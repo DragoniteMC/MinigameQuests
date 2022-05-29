@@ -47,22 +47,27 @@ public class QuestPlaceholder extends PlaceholderExpansion {
 
         this.questPlaceholders.put("target", (uuid, args) -> {
             var quest = args.get(0);
-            return String.valueOf(questsManager.getTargetCount(quest));
+            var useInt = args.size() > 1 && args.get(1).equalsIgnoreCase("int");
+            var target = questsManager.getTargetCount(quest);
+            return useInt ? String.format("%d", Math.round(target)) : String.format("%.2f", target);
         });
 
         this.questPlaceholders.put("finished", (uuid, args) -> {
             var quest = args.get(0);
-            return String.valueOf(questsManager.getFinishedCount(uuid, quest));
+            var useInt = args.size() > 1 && args.get(1).equalsIgnoreCase("int");
+            var finished = questsManager.getFinishedCount(uuid, quest);
+            return useInt ? String.format("%d", Math.round(finished)) : String.format("%.2f", finished);
         });
 
         this.questPlaceholders.put("progress", (uuid, args) -> {
             var quest = args.get(0);
+            var useInt = args.size() > 1 && args.get(1).equalsIgnoreCase("int");
             var max = questsManager.getTargetCount(quest);
             var min = questsManager.getFinishedCount(uuid, quest);
-            return min + "/" + max;
+            return useInt ? String.format("%d/%d", Math.round(min), Math.round(max)) : String.format("%.2f/%.2f", min, max);
         });
 
-        this.questPlaceholders.put("progress_bar", (uuid, args) -> {
+        this.questPlaceholders.put("progressbar", (uuid, args) -> {
             var quest = args.get(0);
             var max = questsManager.getTargetCount(quest);
             var current = questsManager.getFinishedCount(uuid, quest);
