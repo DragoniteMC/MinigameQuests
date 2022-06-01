@@ -67,6 +67,14 @@ public class QuestPlaceholder extends PlaceholderExpansion {
             return useInt ? String.format("%d/%d", Math.round(min), Math.round(max)) : String.format("%.2f/%.2f", min, max);
         });
 
+        this.questPlaceholders.put("finished-stats", (uuid, args) -> {
+            var quest = args.get(0);
+            var stat = args.get(1);
+            var useInt = args.size() > 2 && args.get(2).equalsIgnoreCase("int");
+            var finished = questsManager.getFinishedCount(uuid, quest, stat);
+            return useInt ? String.format("%d", Math.round(finished)) : String.format("%.2f", finished);
+        });
+
         this.questPlaceholders.put("progressbar", (uuid, args) -> {
             var quest = args.get(0);
             var max = questsManager.getTargetCount(quest);

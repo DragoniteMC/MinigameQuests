@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -111,11 +112,22 @@ public class QuestsManager {
 
     public double getFinishedCount(UUID player, String questId) throws QuestException {
         if (!isAccepted(player, questId)) return 0;
-        var gameStats = progressManager.getProgressCache(player);
-        var questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
-        var stats = gameStats.getProgress(questObject.getId());
+        var stats = getProgressStats(player, questId);
         if (stats == null) return 0;
         return stats.values().stream().mapToDouble(v -> v).sum();
+    }
+
+    private Map<String, Double> getProgressStats(UUID player, String questId) throws QuestException {
+        var gameStats = progressManager.getProgressCache(player);
+        var questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        return gameStats.getProgress(questObject.getId());
+    }
+
+    public double getFinishedCount(UUID player, String questId, String stat) throws QuestException {
+        if (!isAccepted(player, questId)) return 0;
+        var stats = getProgressStats(player, questId);
+        if (stats == null) return 0;
+        return stats.getOrDefault(stat, 0.0);
     }
 
 
@@ -127,6 +139,7 @@ public class QuestsManager {
         var gameStats = progressManager.getProgressCache(player);
         var questStats = questsStatsManager.getPlayerStats(player);
         var quest = questStats.getQuest(questId);
+        if (quest == null) throw new QuestException("quest-unavailable", questId);
         quest.lastFinished = Timestamp.from(Instant.now()).getTime();
         gameStats.clearProgress(questId);
         return questsStatsManager.updateQuests(player, quest).thenApply(v -> result);
