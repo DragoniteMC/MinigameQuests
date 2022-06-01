@@ -35,8 +35,8 @@ public class TableManager {
     public Map<String, Double> getTableStats(UUID player, GameTable gameTable, Duration duration, Set<String> stat, long lastStarted) {
 
         var map = new HashMap<String, Double>();
-
-        String selector = (stat == null ? gameTable.statsColumns : stat).stream().map(stats -> String.format("SUM(%s) as %s", stats, stats)).collect(Collectors.joining(", "));
+        var toFetchedStats = (stat == null ? gameTable.statsColumns : stat);
+        String selector = toFetchedStats.stream().map(stats -> String.format("SUM(%s) as %s", stats, stats)).collect(Collectors.joining(", "));
         String statement = String.format(GAME_STATS_SELECTOR, selector, gameTable.table, gameTable.uuidColumn, gameTable.timeColumn);
 
         var deadline =  Timestamp.valueOf(new Timestamp(lastStarted).toLocalDateTime().plus(duration)).getTime();
@@ -50,7 +50,7 @@ public class TableManager {
             stmt.setLong(3, deadline);
             var result = stmt.executeQuery();
             if (result.next()) {
-                for (String stats : gameTable.statsColumns) {
+                for (String stats : toFetchedStats) {
                     map.put(stats, result.getDouble(stats));
                 }
                 logger.debugF("successfully fetched stats: %s", map);

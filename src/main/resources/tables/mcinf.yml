@@ -1,7 +1,7 @@
 table: McInfected_Log
-time_column: time
-uuid_column: uuid
-stats_columns:
+timeColumn: time
+uuidColumn: uuid
+statsColumns:
   - kills
   - deaths
   - wins

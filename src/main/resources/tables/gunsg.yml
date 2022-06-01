@@ -1,9 +1,8 @@
-gunsg:
-  table: GunSG_Log
-  timeColumn: time
-  uuidColumn: uuid
-  statsColumns:
-    - kills
-    - deaths
-    - wins
-    - scores
+table: GunSG_Log
+timeColumn: time
+uuidColumn: uuid
+statsColumns:
+  - kills
+  - deaths
+  - wins
+  - scores
