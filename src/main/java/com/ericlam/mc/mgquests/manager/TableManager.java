@@ -12,13 +12,15 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class TableManager {
 
-    private static final String GAME_STATS_SELECTOR = "SELECT %s FROM %s WHERE `%s` = ? AND ? < `%s` < ? GROUP BY uuid";
+    private static final String GAME_STATS_SELECTOR = "SELECT %s FROM %s WHERE `%s` = ? AND `%s` BETWEEN ? AND ? GROUP BY uuid";
 
     private final SQLDataSource sqlDataSource;
 
