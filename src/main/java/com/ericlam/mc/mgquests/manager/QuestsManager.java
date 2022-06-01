@@ -42,15 +42,22 @@ public class QuestsManager {
             quest = new Quest();
             quest.user = player;
             quest.quest = questId;
-        } else if (questObject.coolDown != null){
+        } else if (questObject.coolDown != null && quest.lastFinished != 0){
            var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
             if (coolDownEnd.isBefore(LocalDateTime.now())){
                 var err = message.getLang().get("quest-unavailable", questId);
                 return CompletableFuture.completedFuture(PurchaseResult.failed(err));
             }
         }
-        quest.lastStarted = Timestamp.from(Instant.now()).getTime();
-        return questsStatsManager.updateQuests(player, quest).thenApply(v -> PurchaseResult.success());
+        final var q = quest;
+        return questsStatsManager.hasReachedMaximum(player).thenCompose(reached -> {
+            if (reached){
+                return CompletableFuture.completedFuture(PurchaseResult.failed(message.getLang().get("max-quest-reached", questId)));
+            } else {
+                q.lastStarted = Timestamp.from(Instant.now()).getTime();
+                return questsStatsManager.updateQuests(player, q).thenApply(v -> PurchaseResult.success());
+            }
+        });
     }
 
     public CompletableFuture<Void> cancelQuest(UUID player, String questId) {
@@ -63,7 +70,7 @@ public class QuestsManager {
         var quest = stats.getQuest(questId);
         if (quest == null){
             return true;
-        } else if (questObject.coolDown != null){
+        } else if (questObject.coolDown != null && quest.lastFinished != 0){
             var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
             return coolDownEnd.isBefore(LocalDateTime.now());
         }

@@ -12,4 +12,6 @@ public interface QuestRepository extends JpaRepository<Quest, Quest.Quester> {
 
     List<Quest> findByUser(UUID user);
 
+    long countByUser(UUID user);
+
 }

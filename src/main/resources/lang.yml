@@ -8,6 +8,7 @@ quest-not-exist: "&cQuest &7{0} &cdoes not exist!"
 quest-unavailable: "&cQuest &7{0} &cis currently not available!"
 quest-not-finished: "&cQuest &7{0} &cis not finished!"
 reload: "config reloaded."
+max-quest-reached: "&cYou have reached the maximum amount of quests!"
 
 progress-bar-finished: "&a█"
 progress-bar: "&c█"

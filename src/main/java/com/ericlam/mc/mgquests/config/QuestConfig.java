@@ -8,4 +8,6 @@ public class QuestConfig extends Configuration {
 
     public int progress_bar_count;
 
+    public int max_quest_acceptable;
+
 }

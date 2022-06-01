@@ -59,7 +59,7 @@ public class ProgressManager {
                 continue;
             }
             var questObject = questObjectOpt.get();
-            if (questObject.coolDown != null) {
+            if (questObject.coolDown != null && quest.lastFinished != 0) {
                 var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
                 if (coolDownEnd.isBefore(LocalDateTime.now())) {
                     logger.debugF("quest %s is cooled down, ignored (deadline: %s)", quest.quest, coolDownEnd);

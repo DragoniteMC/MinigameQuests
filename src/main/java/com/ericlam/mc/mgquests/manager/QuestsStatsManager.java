@@ -1,5 +1,6 @@
 package com.ericlam.mc.mgquests.manager;
 
+import com.ericlam.mc.mgquests.config.QuestConfig;
 import com.ericlam.mc.mgquests.container.QuestStatsCache;
 import com.ericlam.mc.mgquests.db.Quest;
 import com.ericlam.mc.mgquests.repository.QuestRepository;
@@ -17,6 +18,9 @@ public class QuestsStatsManager {
     @Inject
     private QuestRepository questRepository;
 
+    @Inject
+    private QuestConfig config;
+
 
     public CompletableFuture<QuestStatsCache> loadPlayerStats(UUID player) {
         return CompletableFuture.supplyAsync(() -> {
@@ -28,6 +32,10 @@ public class QuestsStatsManager {
             questMap.put(player, cache);
             return cache;
         });
+    }
+
+    public CompletableFuture<Boolean> hasReachedMaximum(UUID player){
+        return CompletableFuture.supplyAsync(() -> questRepository.countByUser(player) >= config.max_quest_acceptable);
     }
 
 
