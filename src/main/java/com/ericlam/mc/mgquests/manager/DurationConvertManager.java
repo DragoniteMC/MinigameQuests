@@ -42,4 +42,14 @@ public class DurationConvertManager {
         var time = converter.apply(duration.time);
         return new Timestamp(quest.lastFinished).toLocalDateTime().plus(time);
     }
+
+    public String formatDuration(Duration duration) {
+        long seconds = duration.getSeconds();
+        long absSeconds = Math.abs(seconds);
+        return String.format(
+                "%d:%02d:%02d",
+                absSeconds / 3600,
+                (absSeconds % 3600) / 60,
+                absSeconds % 60);
+    }
 }

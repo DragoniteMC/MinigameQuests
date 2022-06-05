@@ -10,6 +10,7 @@ import org.dragonitemc.dragonshop.api.PurchaseResult;
 
 import javax.inject.Inject;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -76,6 +77,27 @@ public class QuestsManager {
             return coolDownEnd.isBefore(LocalDateTime.now());
         }
         return true;
+    }
+
+    public String getCoolDownTime(UUID player, String questId) throws QuestException{
+        QuestObject questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        var quest = questsStatsManager.getPlayerStats(player).getQuest(questId);
+        if (quest == null || questObject.coolDown == null) return "00:00:00";
+        var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
+        if (coolDownEnd.isAfter(LocalDateTime.now())) return "00:00:00";
+        var dur = Duration.between(LocalDateTime.now(), coolDownEnd);
+        return durationConvertManager.formatDuration(dur);
+    }
+
+
+    public String getDeadlineTime(UUID player, String questId) throws QuestException {
+        QuestObject questObject = questObjects.findById(questId).orElseThrow(() -> new QuestException("quest-not-exist", questId));
+        var quest = questsStatsManager.getPlayerStats(player).getQuest(questId);
+        if (quest == null || questObject.timeLimit == null) return "00:00:00";
+        var deadline = durationConvertManager.getDeadline(quest, questObject.timeLimit);
+        if (deadline.isAfter(LocalDateTime.now())) return "00:00:00";
+        var dur = Duration.between(LocalDateTime.now(), deadline);
+        return durationConvertManager.formatDuration(dur);
     }
 
     public boolean isAccepted(UUID player, String questId) {

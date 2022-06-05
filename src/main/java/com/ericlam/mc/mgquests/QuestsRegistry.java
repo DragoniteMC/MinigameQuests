@@ -4,9 +4,7 @@ import com.ericlam.mc.eld.bukkit.CommandNode;
 import com.ericlam.mc.eld.bukkit.ComponentsRegistry;
 import com.ericlam.mc.eld.registration.CommandRegistry;
 import com.ericlam.mc.eld.registration.ListenerRegistry;
-import com.ericlam.mc.mgquests.command.QuestsCancelCommand;
-import com.ericlam.mc.mgquests.command.QuestsCommand;
-import com.ericlam.mc.mgquests.command.QuestsReloadCommand;
+import com.ericlam.mc.mgquests.command.*;
 import org.bukkit.event.Listener;
 
 import java.util.List;
@@ -17,6 +15,8 @@ public class QuestsRegistry implements ComponentsRegistry {
         commandRegistry.command(QuestsCommand.class, cc -> {
             cc.command(QuestsReloadCommand.class);
             cc.command(QuestsCancelCommand.class);
+            cc.command(QuestsAcceptCommand.class);
+            cc.command(QuestsFinishCommand.class);
         });
     }
 

@@ -91,6 +91,16 @@ public class QuestPlaceholder extends PlaceholderExpansion {
                     String.valueOf(bar).repeat(Math.max(0, unfinished));
         });
 
+        this.questPlaceholders.put("deadline-remain", (uuid, args) ->{
+            var quest = args.get(0);
+            return questsManager.getDeadlineTime(uuid, quest);
+        });
+
+        this.questPlaceholders.put("cooldown-remain", (uuid, args) -> {
+            var quest = args.get(0);
+            return questsManager.getCoolDownTime(uuid, quest);
+        });
+
     }
 
 
