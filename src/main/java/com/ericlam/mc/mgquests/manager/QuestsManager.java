@@ -2,6 +2,8 @@ package com.ericlam.mc.mgquests.manager;
 
 import com.ericlam.mc.eld.annotations.InjectPool;
 import com.ericlam.mc.eld.configurations.GroupConfig;
+import com.ericlam.mc.eld.misc.DebugLogger;
+import com.ericlam.mc.eld.services.LoggingService;
 import com.ericlam.mc.mgquests.QuestException;
 import com.ericlam.mc.mgquests.config.QuestMessage;
 import com.ericlam.mc.mgquests.config.QuestObject;
@@ -32,6 +34,12 @@ public class QuestsManager {
     @Inject
     private QuestMessage message;
 
+    private final DebugLogger logger;
+
+    @Inject
+    public QuestsManager(LoggingService loggingService) {
+        this.logger = loggingService.getLogger(QuestsManager.class);
+    }
 
     @InjectPool
     private GroupConfig<QuestObject> questObjects;
@@ -46,9 +54,12 @@ public class QuestsManager {
             quest.quest = questId;
         } else if (questObject.coolDown != null && quest.lastFinished != 0){
            var coolDownEnd = durationConvertManager.getCoolDownEndTime(quest, questObject.coolDown);
-            if (coolDownEnd.isBefore(LocalDateTime.now())){
+            if (coolDownEnd.isAfter(LocalDateTime.now())){
+                logger.debugF("player %s is cooling down quest %s, cannot accept", player, questId);
                 var err = message.getLang().get("quest-unavailable", questId);
                 return CompletableFuture.completedFuture(PurchaseResult.failed(err));
+            } else {
+                logger.debugF("player %s is cooled down quest %s, can accept", player, questId);
             }
         }
         final var q = quest;
@@ -116,7 +127,10 @@ public class QuestsManager {
         }
         // check deadline is passed
         var deadline = durationConvertManager.getDeadline(quest, questObject.timeLimit);
-        if (deadline.isBefore(LocalDateTime.now())) return PurchaseResult.failed(message.getLang().get("quest-unavailable", questId));
+        if (deadline.isBefore(LocalDateTime.now())) {
+            logger.debugF("player %s quest %s deadline is passed", player, questId);
+            return PurchaseResult.failed(message.getLang().get("quest-unavailable", questId));
+        }
         // check all stats is passed
         for (String targetStat : questObject.targets.keySet()) {
             var passNum = questObject.targets.get(targetStat);

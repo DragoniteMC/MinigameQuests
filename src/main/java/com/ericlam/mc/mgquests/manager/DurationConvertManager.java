@@ -47,7 +47,8 @@ public class DurationConvertManager {
         long seconds = duration.getSeconds();
         long absSeconds = Math.abs(seconds);
         return String.format(
-                "%d:%02d:%02d",
+                "%s%d:%02d:%02d",
+                seconds >= 0 ? "" : "-",
                 absSeconds / 3600,
                 (absSeconds % 3600) / 60,
                 absSeconds % 60);
